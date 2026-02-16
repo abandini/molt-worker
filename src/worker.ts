@@ -1,5 +1,6 @@
 import { Env } from './types';
 import { runHeartbeat } from './heartbeat/heartbeat-runner';
+import { storeSubscription, getQueuedNotifications } from './channels/push-notifier';
 
 // Re-export Durable Object for wrangler to discover
 export { VoiceSessionDO } from './gateway/voice-session';
@@ -30,6 +31,25 @@ export default {
       return stub.fetch(
         new Request(new URL('/ws', request.url).toString(), request),
       );
+    }
+
+    if (url.pathname === '/api/push/subscribe' && request.method === 'POST') {
+      const body = await request.json() as { userId: string; subscription: unknown };
+      const ok = await storeSubscription(
+        (env as Env & { CACHE?: KVNamespace }).CACHE,
+        body.userId,
+        body.subscription as Parameters<typeof storeSubscription>[2],
+      );
+      return json({ ok });
+    }
+
+    if (url.pathname === '/api/notifications' && request.method === 'GET') {
+      const userId = url.searchParams.get('userId') || 'anonymous';
+      const notifications = await getQueuedNotifications(
+        (env as Env & { CACHE?: KVNamespace }).CACHE,
+        userId,
+      );
+      return json({ notifications });
     }
 
     if (url.pathname === '/webhook/telegram' && request.method === 'POST') {
