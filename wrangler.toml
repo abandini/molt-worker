@@ -7,7 +7,7 @@ compatibility_flags = ["nodejs_compat"]
 crons = ["*/30 * * * *"]
 
 # Service Bindings - zero-latency Worker-to-Worker calls
-# NOTE: Comment out until these workers are deployed to the same account
+# NOTE: Uncomment when these workers are deployed to the same account
 # [[services]]
 # binding = "AI_COFOUNDER"
 # service = "ai-cofounder"
@@ -25,19 +25,21 @@ class_name = "VoiceSessionDO"
 tag = "v1"
 new_classes = ["VoiceSessionDO"]
 
-# Storage - IDs filled after wrangler create commands
-# [[d1_databases]]
-# binding = "DB"
-# database_name = "molt-db"
-# database_id = "TBD"
+# D1 Database
+[[d1_databases]]
+binding = "DB"
+database_name = "molt-db"
+database_id = "938e1445-041e-4fbe-8d63-f35c7bd18f69"
 
-# [[kv_namespaces]]
-# binding = "CACHE"
-# id = "TBD"
+# KV Namespace
+[[kv_namespaces]]
+binding = "CACHE"
+id = "32172873f2374d129aae2278364ff797"
 
-# [[r2_buckets]]
-# binding = "STORAGE"
-# bucket_name = "molt-storage"
+# R2 Bucket
+[[r2_buckets]]
+binding = "STORAGE"
+bucket_name = "molt-storage"
 
 [vars]
 BASEMENT_TUNNEL_URL = "https://brain.bill-burkey.workers.dev"

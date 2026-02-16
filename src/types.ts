@@ -26,8 +26,8 @@ export interface Env {
   // Service Bindings (optional until deployed together)
   AI_COFOUNDER?: Fetcher;
   SKILL_FORGE?: Fetcher;
-  // Storage (uncomment when created):
-  // DB: D1Database;
-  // CACHE: KVNamespace;
-  // STORAGE: R2Bucket;
+  // Storage
+  DB: D1Database;
+  CACHE: KVNamespace;
+  STORAGE: R2Bucket;
 }

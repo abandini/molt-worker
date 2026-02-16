@@ -36,7 +36,7 @@ export default {
     if (url.pathname === '/api/push/subscribe' && request.method === 'POST') {
       const body = await request.json() as { userId: string; subscription: unknown };
       const ok = await storeSubscription(
-        (env as Env & { CACHE?: KVNamespace }).CACHE,
+        env.CACHE,
         body.userId,
         body.subscription as Parameters<typeof storeSubscription>[2],
       );
@@ -46,7 +46,7 @@ export default {
     if (url.pathname === '/api/notifications' && request.method === 'GET') {
       const userId = url.searchParams.get('userId') || 'anonymous';
       const notifications = await getQueuedNotifications(
-        (env as Env & { CACHE?: KVNamespace }).CACHE,
+        env.CACHE,
         userId,
       );
       return json({ notifications });
