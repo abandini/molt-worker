@@ -23,10 +23,11 @@ export interface VoiceSessionState {
 export interface Env {
   VOICE_SESSION: DurableObjectNamespace;
   BASEMENT_TUNNEL_URL: string;
-  // Uncomment when deployed:
+  // Service Bindings (optional until deployed together)
+  AI_COFOUNDER?: Fetcher;
+  SKILL_FORGE?: Fetcher;
+  // Storage (uncomment when created):
   // DB: D1Database;
   // CACHE: KVNamespace;
   // STORAGE: R2Bucket;
-  // AI_COFOUNDER: Fetcher;
-  // SKILL_FORGE: Fetcher;
 }

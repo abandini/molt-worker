@@ -1,5 +1,6 @@
 import type { Env, SidebandMessage, VoiceSessionState } from '../types';
 import { AudioRelay } from './audio-relay';
+import { dispatchIntent } from '../intents/parallel-dispatcher';
 
 /**
  * Durable Object managing a single voice session.
@@ -103,7 +104,7 @@ export class VoiceSessionDO implements DurableObject {
     }
   }
 
-  private handleSideband(ws: WebSocket, msg: SidebandMessage): void {
+  private async handleSideband(ws: WebSocket, msg: SidebandMessage): Promise<void> {
     if (msg.data?.command === 'ping') {
       const response: SidebandMessage = {
         type: 'control',
@@ -119,8 +120,31 @@ export class VoiceSessionDO implements DurableObject {
         timestamp: Date.now(),
       };
       ws.send(JSON.stringify(response));
-    } else if (this.relay?.connected) {
-      // Forward other sideband messages to brain
+      return;
+    }
+
+    // Intent dispatch pipeline: intercept -> route -> dispatch -> send context back
+    if (msg.type === 'intent') {
+      const contextMsg = await dispatchIntent(msg, {
+        AI_COFOUNDER: this.env.AI_COFOUNDER,
+        SKILL_FORGE: this.env.SKILL_FORGE,
+      });
+
+      if (contextMsg) {
+        // Send enriched context back to brain-server
+        if (this.relay?.connected) {
+          this.relay.sendSidebandToBrain(contextMsg);
+        }
+        // Also send to client for UI updates
+        if (ws.readyState === WebSocket.READY_STATE_OPEN) {
+          ws.send(JSON.stringify(contextMsg));
+        }
+      }
+      return;
+    }
+
+    // Forward other sideband messages to brain
+    if (this.relay?.connected) {
       this.relay.sendSidebandToBrain(msg);
     }
   }
