@@ -1,4 +1,5 @@
 import { Env } from './types';
+import { runHeartbeat } from './heartbeat/heartbeat-runner';
 
 // Re-export Durable Object for wrangler to discover
 export { VoiceSessionDO } from './gateway/voice-session';
@@ -44,5 +45,12 @@ export default {
     ctx: ExecutionContext,
   ): Promise<void> {
     console.log(`[Heartbeat] Cron fired at ${new Date().toISOString()}`);
+    ctx.waitUntil(
+      runHeartbeat(env).then(result => {
+        console.log(`[Heartbeat] Complete: ${result.actions.length} actions, noteworthy=${result.noteworthy}`);
+      }).catch(err => {
+        console.error('[Heartbeat] Failed:', err);
+      }),
+    );
   },
 } satisfies ExportedHandler<Env>;
