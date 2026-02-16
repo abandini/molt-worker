@@ -1,0 +1,43 @@
+name = "molt-worker"
+main = "src/worker.ts"
+compatibility_date = "2026-02-16"
+compatibility_flags = ["nodejs_compat"]
+
+[triggers]
+crons = ["*/30 * * * *"]
+
+# Service Bindings - zero-latency Worker-to-Worker calls
+# NOTE: Comment out until these workers are deployed to the same account
+# [[services]]
+# binding = "AI_COFOUNDER"
+# service = "ai-cofounder"
+#
+# [[services]]
+# binding = "SKILL_FORGE"
+# service = "skill-forge"
+
+# Durable Objects
+[[durable_objects.bindings]]
+name = "VOICE_SESSION"
+class_name = "VoiceSessionDO"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["VoiceSessionDO"]
+
+# Storage - IDs filled after wrangler create commands
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "molt-db"
+# database_id = "TBD"
+
+# [[kv_namespaces]]
+# binding = "CACHE"
+# id = "TBD"
+
+# [[r2_buckets]]
+# binding = "STORAGE"
+# bucket_name = "molt-storage"
+
+[vars]
+BASEMENT_TUNNEL_URL = "https://brain.bill-burkey.workers.dev"
