@@ -1,87 +1,13 @@
-import { Env, SidebandMessage, VoiceSessionState } from './types';
+import { Env } from './types';
+
+// Re-export Durable Object for wrangler to discover
+export { VoiceSessionDO } from './gateway/voice-session';
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
     headers: { 'Content-Type': 'application/json' },
   });
-}
-
-export class VoiceSessionDO implements DurableObject {
-  private state: DurableObjectState;
-  private env: Env;
-  private sessionState: VoiceSessionState | null = null;
-
-  constructor(state: DurableObjectState, env: Env) {
-    this.state = state;
-    this.env = env;
-  }
-
-  async fetch(request: Request): Promise<Response> {
-    const url = new URL(request.url);
-
-    if (url.pathname === '/ws') {
-      const upgradeHeader = request.headers.get('Upgrade');
-      if (!upgradeHeader || upgradeHeader !== 'websocket') {
-        return new Response('Expected WebSocket', { status: 426 });
-      }
-
-      const pair = new WebSocketPair();
-      const [client, server] = Object.values(pair);
-
-      this.state.acceptWebSocket(server);
-
-      this.sessionState = {
-        userId: url.searchParams.get('userId') || 'anonymous',
-        connectedAt: Date.now(),
-        lastActivity: Date.now(),
-        frameCount: 0,
-      };
-
-      return new Response(null, { status: 101, webSocket: client });
-    }
-
-    return new Response('Not found', { status: 404 });
-  }
-
-  webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): void | Promise<void> {
-    if (!this.sessionState) return;
-    this.sessionState.lastActivity = Date.now();
-
-    if (message instanceof ArrayBuffer) {
-      this.sessionState.frameCount++;
-      ws.send(message);
-    } else {
-      try {
-        const sideband: SidebandMessage = JSON.parse(message);
-        if (sideband.data?.command === 'ping') {
-          const response: SidebandMessage = {
-            type: 'control',
-            data: {
-              command: 'stop',
-              context_data: {
-                pong: true,
-                uptime: Date.now() - this.sessionState.connectedAt,
-                frameCount: this.sessionState.frameCount,
-              },
-            },
-            timestamp: Date.now(),
-          };
-          ws.send(JSON.stringify(response));
-        }
-      } catch {
-        // Ignore malformed JSON
-      }
-    }
-  }
-
-  webSocketClose(ws: WebSocket, code: number, reason: string, wasClean: boolean): void | Promise<void> {
-    this.sessionState = null;
-  }
-
-  webSocketError(ws: WebSocket, error: unknown): void | Promise<void> {
-    this.sessionState = null;
-  }
 }
 
 export default {
